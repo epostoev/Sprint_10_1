@@ -1,4 +1,9 @@
 # Byte-compiled / optimized / DLL files
+allure-results/
+__pycache__/
+.venv/
+.pytest_cache/
+.idea/
 __pycache__/
 *.py[codz]
 *$py.class

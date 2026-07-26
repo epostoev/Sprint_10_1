@@ -23,3 +23,20 @@ def main_page(driver):
 def route_set(main_page):
     main_page.set_route(Addresses.FROM_ADDRESS, Addresses.TO_ADDRESS)
     return main_page
+
+@pytest.fixture
+def fast_route(route_set):
+    """Маршрут с выбранным видом 'Быстрый'."""
+    route_set.click_mode_fast()
+    return route_set
+
+@pytest.fixture
+def taxi_order_form(fast_route):
+    """Открытая форма заказа такси."""
+    fast_route.click_call_taxi()
+    return fast_route
+
+@pytest.fixture
+def order_page(taxi_order_form):
+    from pages.order_page import OrderPage
+    return OrderPage(taxi_order_form.driver)

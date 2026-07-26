@@ -18,6 +18,9 @@ test:
 report:
 	allure serve allure-results
 
+report-generate:
+	allure generate allure-results -o allure-report --clean
+
 test-chrome:
 	pytest -v -s -k "Chrome" --alluredir=allure-results
 
