@@ -4,6 +4,8 @@ from selenium.webdriver.chrome.options import Options
 
 from data import Addresses
 from pages.main_page import MainPage
+from pages.order_page import OrderPage
+
     
 @pytest.fixture
 def driver():
@@ -38,5 +40,4 @@ def taxi_order_form(fast_route):
 
 @pytest.fixture
 def order_page(taxi_order_form):
-    from pages.order_page import OrderPage
     return OrderPage(taxi_order_form.driver)

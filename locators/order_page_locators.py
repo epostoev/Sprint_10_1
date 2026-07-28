@@ -61,3 +61,5 @@ class OrderPageLocators:
     ORDER_DETAILS_PRICE = (By.XPATH,
         ".//div[@class='order-details-row'][.//div[contains(text(),'Еще про поездку')]]"
         "//div[@class='o-d-sh']")
+
+    TARIFF_POPUP_DESCRIPTION = (By.XPATH, ".//div[@class='i-dPrefix']")

@@ -40,7 +40,6 @@ class MainPageLocators:
     TRANSPORT_TYPE_ICONS = (
         By.XPATH,
         ".//div[@class='types-container']//img[@class='type-icon']")
-    # TRANSPORT_TYPES = (By.XPATH, ".//div[@class='types-container']//div[@class='mode']")
 
     # Кнопка Вызвать такси
     BUTTON_CALL_TAXI = (

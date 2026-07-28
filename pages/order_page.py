@@ -1,8 +1,4 @@
 import allure
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 
 from pages.base_page import BasePage
 from locators.order_page_locators import OrderPageLocators
@@ -16,8 +12,8 @@ class OrderPage(BasePage):
         """Находит карточку тарифа по названию."""
         cards = self.find_elements(OrderPageLocators.TARIFF_CARD)
         for card in cards:
-            title = card.find_element(*OrderPageLocators.TARIFF_CARD_TITLE)
-            text = self.driver.execute_script("return arguments[0].innerText;", title).strip()
+            title = self.find_child_element(card, OrderPageLocators.TARIFF_CARD_TITLE)
+            text = self.get_inner_text(title).strip()
             if text == tariff_name:
                 return card
         raise Exception(f"Тариф '{tariff_name}' не найден")
@@ -27,9 +23,8 @@ class OrderPage(BasePage):
         cards = self.find_elements(OrderPageLocators.TARIFF_CARD)
         names = []
         for card in cards:
-            title = card.find_element(*OrderPageLocators.TARIFF_CARD_TITLE)
-            text = self.driver.execute_script("return arguments[0].innerText;", title)
-            names.append(text.strip())
+            title = self.find_child_element(card, OrderPageLocators.TARIFF_CARD_TITLE)
+            names.append(self.get_inner_text(title).strip())
         return names
 
     @allure.step("Проверяем что отображается один активный тариф")
@@ -45,16 +40,14 @@ class OrderPage(BasePage):
         def hover_and_get_text(driver):
             # Заново ищем карточку — React перерисовывает DOM после клика
             card = self._find_tariff_card(tariff_name)
-            i_button = card.find_element(*OrderPageLocators.TARIFF_I_BUTTON)
-            driver.execute_script(
-                "arguments[0].scrollIntoView({block: 'center', inline: 'center'});", i_button
-            )
-            ActionChains(driver).move_to_element(i_button).perform()
-            element = card.find_element(By.XPATH, ".//div[@class='i-dPrefix']")
-            text = driver.execute_script("return arguments[0].innerText;", element).strip()
+            i_button = self.find_child_element(card, OrderPageLocators.TARIFF_I_BUTTON)
+            self.scroll_to_element(i_button)
+            self.hover_element(i_button)
+            element = self.find_child_element(card, OrderPageLocators.TARIFF_POPUP_DESCRIPTION)
+            text = self.get_inner_text(element).strip()
             return text if text else False
 
-        return WebDriverWait(self.driver, 15).until(hover_and_get_text)
+        return self.wait_until(hover_and_get_text, timeout=15)
 
     @allure.step("Проверяем что блок полей заказа отображается")
     def is_order_fields_visible(self):
@@ -70,19 +63,16 @@ class OrderPage(BasePage):
         card = self._find_tariff_card(tariff_name)
         card.click()
 
-    @allure.step("Раскрываем блок 'Требования к заказу'")
-    def open_requirements(self):
-        self.click(OrderPageLocators.REQUIREMENTS_HEADER)
-        self.wait_for_element_visible(OrderPageLocators.REQUIREMENTS_BODY)
-
     @allure.step("Включаем чекбокс 'Столик для ноутбука'")
     def enable_laptop_table(self):
-        self.open_requirements()
-        self.click(OrderPageLocators.CHECKBOX_LAPTOP_TABLE)
+        # Слайдер перекрывает скрытый input, поэтому кликаем через JS
+        checkbox = self.find_element(OrderPageLocators.CHECKBOX_LAPTOP_TABLE)
+        self.scroll_to_element(checkbox)
+        self.click_js(OrderPageLocators.CHECKBOX_LAPTOP_TABLE)
 
     @allure.step("Проверяем что чекбокс 'Столик для ноутбука' включён")
     def is_laptop_table_enabled(self):
-        checkbox = self.driver.find_element(*OrderPageLocators.CHECKBOX_LAPTOP_TABLE_INPUT)
+        checkbox = self.find_element(OrderPageLocators.CHECKBOX_LAPTOP_TABLE_INPUT)
         return checkbox.is_selected()
 
     @allure.step("Нажимаем кнопку 'Ввести номер и заказать'")
@@ -108,11 +98,8 @@ class OrderPage(BasePage):
 
     @allure.step("Ждём окно совершённого заказа (заголовок 'приедет')")
     def wait_for_order_completed(self, timeout=60):
-        WebDriverWait(self.driver, timeout).until(
-            EC.text_to_be_present_in_element(
-                OrderPageLocators.ORDER_HEADER_TITLE, "приедет"
-            )
-        )
+        self.wait_for_text_in_element(
+            OrderPageLocators.ORDER_HEADER_TITLE, "приедет", timeout=timeout)
 
     @allure.step("Получаем заголовок окна заказа")
     def get_order_header_text(self):
@@ -144,10 +131,4 @@ class OrderPage(BasePage):
 
     @allure.step("Проверяем что окно заказа закрылось")
     def is_order_window_closed(self):
-        try:
-            WebDriverWait(self.driver, 5).until(
-                EC.invisibility_of_element_located((By.CLASS_NAME, "order"))
-            )
-            return True
-        except Exception:
-            return False
+        return self.wait_for_element_invisible(OrderPageLocators.ORDER_WINDOW, timeout=5)

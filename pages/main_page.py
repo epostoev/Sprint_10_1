@@ -3,8 +3,6 @@ import allure
 from data import URLS
 from pages.base_page import BasePage
 from locators.main_page_locators import MainPageLocators
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.common.exceptions import TimeoutException
 
 
 class MainPage(BasePage):
@@ -31,16 +29,12 @@ class MainPage(BasePage):
     @allure.step("Проверяем что на карте видны ровно две активные точки маршрута")
     def are_route_pins_visible(self):
         try:
-            WebDriverWait(self.driver, 10).until(
-                lambda d: len([
-                    pin for pin in d.find_elements(*MainPageLocators.ROUTE_PINS)
-                    if pin.is_displayed()
-                ]) >= 2
+            self.wait_until(
+                lambda d: self.count_visible_elements(MainPageLocators.ROUTE_PINS) >= 2,
+                timeout=10
             )
-            # Дополнительно: убедимся, что предыдущие маршруты очищены
-            # и что маркеры привязаны к правильным адресам
             return True
-        except TimeoutException:
+        except Exception:
             return False
 
     @allure.step("Проверяем что блок выбора маршрута отображается")
@@ -63,12 +57,7 @@ class MainPage(BasePage):
     def click_mode_custom(self):
         self.click(MainPageLocators.MODE_CUSTOM)
 
-    # @allure.step("Получаем список типов передвижения")
-    # def get_transport_types(self):
-    #     elements = self.find_elements(MainPageLocators.TRANSPORT_TYPES)
-    #     return [e.text for e in elements]
-
-    #     @allure.step("Получаем список доступных типов передвижения")
+    @allure.step("Получаем список доступных типов передвижения")
     def get_transport_types(self):
         """Возвращает список типов по именам иконок (car, walk, taxi, bike, scooter, drive)."""
         icons = self.find_elements(MainPageLocators.TRANSPORT_TYPE_ICONS)
@@ -78,15 +67,6 @@ class MainPage(BasePage):
             name = src.split("/")[-1].split(".")[0].replace("-active", "")
             types.append(name)
         return types
-
-    # @allure.step("Выбираем тип передвижения: {transport_type}")
-    # def select_transport_type(self, transport_type):
-    #     elements = self.find_elements(MainPageLocators.TRANSPORT_TYPES)
-    #     for element in elements:
-    #         if element.text == transport_type:
-    #             element.click()
-    #             return
-    #     raise Exception(f"Тип передвижения '{transport_type}' не найден")
 
     @allure.step("Выбираем тип передвижения: {transport_type}")
     def select_transport_type(self, transport_type):
